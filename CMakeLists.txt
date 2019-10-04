@@ -44,7 +44,7 @@ include_directories(${SIMPLECAT_INCLUDE_DIRS})
 #   set(JSONCPP_LIBRARY ${JSONCPP_LIBRARIES})
 # endif ()
 
-set(COMMON_LIBRARIES
+set(COMMON_LIBRARIES pthread
     ${SIMPLECAT_LIBRARIES}
 )
 
