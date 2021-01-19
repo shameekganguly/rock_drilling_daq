@@ -14,7 +14,7 @@ NO_DATA_VALUE = -9999
 class DataManager():
 	def __init__(self, redis_ip_add="127.0.0.1", redis_port=6379, update_freq=10):
 		self.reading = False
-		# self.update_freq = update_freq
+		# self.update_freq = update_freq # not being used. We are using tkinter variables instead
 		self.redis_port = redis_port
 		self.redis_ip_add = redis_ip_add
 		# redis keys and values
@@ -65,6 +65,9 @@ class DataManager():
 		self.torque_unit = "Nm"
 		self.force_unit = "kN"
 
+		# redis command keys
+		self.start_logging_key = "utec::logging::start"
+
 		self.initDataDict()
 
 		self.ui_alert_callback = None
@@ -90,12 +93,12 @@ class DataManager():
 		self.connection.close()
 
 	def startLogging(self):
-		#TODO: redis set start logging key
-		pass
+		#redis set start logging key
+		self.connection.set(self.start_logging_key, "1")
 
 	def stopLogging(self):
-		#TODO: redis set stop logging key
-		pass
+		#redis set stop logging key
+		self.connection.set(self.start_logging_key, "0")
 
 	def readThreaded(self):
 		pass
@@ -332,9 +335,11 @@ def main():
 	data_manager = DataManager()
 	data_manager.startRead()
 	ui_manager = UIManager(root, data_manager)
+
 	def rootOnClose():
 		if ui_manager.onClose():
 			root.destroy()
+
 	update_interval = int(1000/30) #ms
 	def updateUI():
 		data_manager.readOnce()
