@@ -1,19 +1,20 @@
 # daq_ui.py
 
-from tkinter import Tk, LEFT, RIGHT, TOP, BOTTOM, BOTH, RAISED, IntVar, font
+from tkinter import Tk, LEFT, RIGHT, TOP, BOTTOM, BOTH, RAISED, IntVar, font, messagebox
 from tkinter.ttk import Frame, Label, Button, Style
 import tkinter.font as tkFont
 from redis import Redis
 import time
 from threading import Thread
 import numpy as np
+from playsound import playsound
 
 NO_DATA_VALUE = -9999
 
 class DataManager():
 	def __init__(self, redis_ip_add="127.0.0.1", redis_port=6379, update_freq=10):
 		self.reading = False
-		self.update_freq = update_freq
+		# self.update_freq = update_freq
 		self.redis_port = redis_port
 		self.redis_ip_add = redis_ip_add
 		# redis keys and values
@@ -72,14 +73,19 @@ class DataManager():
 		# connect to redis
 		self.connection = Redis(host=self.redis_ip_add, port=self.redis_port)
 		self.reading = True
+
+		# -- Not using threading --
 		# set thread with readThreaded method
 		# self.read_thread = Thread(target = self.readThreaded)
 		# self.read_thread.start()
 
 	def stopRead(self):
 		self.reading = False
+
+		# -- Not using threading --
 		# stop read thread
 		# self.read_thread.join()
+
 		# disconnect from redis
 		self.connection.close()
 
@@ -92,9 +98,11 @@ class DataManager():
 		pass
 
 	def readThreaded(self):
-		while self.reading:
-			time.sleep(1.0/self.update_freq)
-			self.readOnce()
+		pass
+		# -- Not using threading --
+		# while self.reading:
+		# 	time.sleep(1.0/self.update_freq)
+		# 	self.readOnce()
 
 	def readOnce(self):
 		# pipeget from redis
@@ -139,11 +147,14 @@ class UIManager(Frame):
 		self.max_temperature = 90 #deg C
 		self.max_pressure = 105 #bar
 		self.stall_speed_threshold = 5 # RPM or cm/min
+		self.min_stall_pressure = 60 # bar
 		self.max_screwjack_travel = 25 #cm
 
 		self.is_logging = False
+		self.did_show_alert = False
 
 		self.initUI()
+		self.data.ui_alert_callback = self.alertCallback
 
 	def initUI(self):
 		'''
@@ -153,8 +164,6 @@ class UIManager(Frame):
 		- user frame: which has buttons for user inputs
 		'''
 		self.master.title("UTEC Experiments UI")
-		# self.style = Style()
-		# self.style.configure("TLabel", foreground="red", background="white")
 
 		self.initSensorFrame2()
 		self.initSensorFrame1()
@@ -246,25 +255,43 @@ class UIManager(Frame):
 			self.data.front_bearing_temp.get(),
 			self.data.rear_bearing_temp.get()
 		)
-		if temperature > self.max_temperature:
-			self.alertUser('TERMINATE: TEMPERATURE LIMIT REACHED!!')
-
-		if self.data.hpu_pressure.get() > self.max_pressure:
-			self.alertUser('TERMINATE: PRESSURE LIMIT REACHED!!')
-
 		speed = min(
 			self.data.drill_speed.get(),
 			self.data.screwjack_speed.get()
 		)
-		if speed > NO_DATA_VALUE and speed < self.stall_speed_threshold:
+		if temperature > self.max_temperature:
+			self.alertUser('TERMINATE: TEMPERATURE LIMIT REACHED!!')
+
+		elif self.data.hpu_pressure.get() > self.max_pressure:
+			self.alertUser('TERMINATE: PRESSURE LIMIT REACHED!!')
+
+		elif self.data.hpu_pressure.get() > self.min_stall_pressure and speed > NO_DATA_VALUE and speed < self.stall_speed_threshold:
 			self.alertUser('TERMINATE: DRILL OR SCREWJACK STALLED!!')
 
-		if self.data.screwjack_position_comp.get() > self.max_screwjack_travel:
+		elif self.data.screwjack_position_comp.get() > self.max_screwjack_travel:
 			self.alertUser('TERMINATE: SCREWJACK TRAVEL LIMIT REACHED!!')
+		else:
+			self.did_show_alert = False
 
 	def alertUser(self, message):
-		#TODO: play alert sound
-		pass
+		if not self.did_show_alert:
+			self.did_show_alert = True
+			self.should_play_alert_sound = True
+			#play alert sound
+			sound_thread = Thread(target = self.playAlertSound)
+			sound_thread.start()
+			msg_thread = Thread(target = self.showAlertMessage, kwargs={"message":message})
+			msg_thread.start()
+
+	def showAlertMessage(self, message):
+		messagebox.showerror(title="Critical failure", message=message)
+		# once messagebox is closed, stop playing sound
+		self.should_play_alert_sound = False
+
+	def playAlertSound(self):
+		while self.should_play_alert_sound:
+			time.sleep(0.2)
+			playsound('beep-02.mp3')
 
 	def clearAlert(self):
 		#TODO: stop playing alert sound
@@ -297,6 +324,7 @@ class UIManager(Frame):
 		pass
 
 	def onClose(self):
+		# TODO: check if logging is on. if so, ask user input
 		self.data.stopRead()
 
 def main():
@@ -310,12 +338,13 @@ def main():
 	def rootOnClose():
 		ui_manager.onClose()
 		root.destroy()
+	update_interval = int(1000/30) #ms
 	def updateUI():
 		data_manager.readOnce()
-		root.after(30, updateUI)
+		root.after(update_interval, updateUI)
 
 	root.protocol("WM_DELETE_WINDOW", rootOnClose)
-	root.after(30, updateUI)
+	root.after(update_interval, updateUI)
 	root.mainloop()
 
 if __name__ == "__main__":
