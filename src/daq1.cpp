@@ -2,7 +2,9 @@
 #include <simplecat/Master.h>
 #include <simplecat/Beckhoff/Beckhoff.h>
 #include "utils/Logger.h"
+#include "utils/RedisClient.h"
 #include <thread>
+#include <string>
 
 typedef Eigen::Matrix<double, 1, 1> Vector1d;
 
@@ -32,6 +34,20 @@ void sighandler(int sig) {
 	master.stop();
 }
 
+/* Redis keys */
+const std::string hpu_pressure_key = "utec::read::pressure::hpu";
+const std::string drill_pressure_key = "utec::read::pressure::drill";
+const std::string screwjack_pressure_key = "utec::read::pressure::screwjack";
+const std::string fluid_pressure_key = "utec::read::pressure::fluid";
+const std::string screwjack_speed_key = "utec::read::linear_speed::screwjack";
+const std::string screwjack_position_key = "utec::read::position::screwjack";
+const std::string screwjack_force_key = "utec::read::force::drill";
+const std::string drill_speed_key = "utec::read::rotary_speed::drill";
+const std::string drill_torque_key = "utec::read::torque::drill";
+const std::string front_bearing_temp_key = "utec::read::temperature::front_bearing";
+const std::string rear_bearing_temp_key = "utec::read::temperature::rear_bearing";
+
+
 void control_callback() {
 	speed_sensor_counts << bh_el5152.read_value[0];
 	pressure_sensor_counts << bh_el3062.read_data_[0];
@@ -53,7 +69,7 @@ int main (int argc, char** argv) {
 	master.setThreadHighPriority();
 	master.activate();
 	uint control_freq = 1000; // Hz
-	
+
 	logger.addVectorToLog(&speed_sensor_counts, "speed");
 	logger.addVectorToLog(&pressure_sensor_counts, "pressure");
 	logger.addVectorToLog(&force_sensor_counts, "force");
