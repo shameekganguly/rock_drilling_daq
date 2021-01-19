@@ -324,8 +324,12 @@ class UIManager(Frame):
 		pass
 
 	def onClose(self):
-		# TODO: check if logging is on. if so, ask user input
+		# check if logging is on
+		if self.is_logging:
+			messagebox.showerror("Exit DAQ", "Logging is still on. Turn off logging before exiting.")
+			return False
 		self.data.stopRead()
+		return True
 
 def main():
 	# get arguments
@@ -336,8 +340,8 @@ def main():
 	data_manager.startRead()
 	ui_manager = UIManager(root, data_manager)
 	def rootOnClose():
-		ui_manager.onClose()
-		root.destroy()
+		if ui_manager.onClose():
+			root.destroy()
 	update_interval = int(1000/30) #ms
 	def updateUI():
 		data_manager.readOnce()
