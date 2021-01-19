@@ -293,10 +293,6 @@ class UIManager(Frame):
 			time.sleep(0.2)
 			playsound('beep-02.mp3')
 
-	def clearAlert(self):
-		#TODO: stop playing alert sound
-		pass
-
 	def onLoggingButton(self):
 		if self.is_logging:
 			self.stopLogging()
@@ -320,9 +316,6 @@ class UIManager(Frame):
 	def displayLogname(self):
 		pass
 
-	def updateLabelsThreaded(self):
-		pass
-
 	def onClose(self):
 		# check if logging is on
 		if self.is_logging:
@@ -332,7 +325,7 @@ class UIManager(Frame):
 		return True
 
 def main():
-	# get arguments
+	# TODO: get arguments
 	# start UI
 	root = Tk()
 	root.geometry("1100x600+100+100")
