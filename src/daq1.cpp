@@ -3,6 +3,7 @@
 #include <simplecat/Beckhoff/Beckhoff.h>
 #include "utils/Logger.h"
 #include "utils/RedisClient.h"
+#include "utils/ButterworthFilter.h"
 #include <chrono>
 #include <thread>
 #include <string>
@@ -15,16 +16,16 @@ using namespace std::chrono_literals;
 
 const int NO_DATA_VALUE = -9999;
 
-Vector1d drill_speed_sensor_counts(NO_DATA_VALUE);
-Vector1d screwjack_position_sensor_counts(NO_DATA_VALUE);
-Vector1d screwjack_speed_counts(NO_DATA_VALUE);
-Vector1d hpu_pressure_sensor_counts(NO_DATA_VALUE);
-Vector1d screwjack_pressure_sensor_counts(NO_DATA_VALUE);
-Vector1d drill_pressure_sensor_counts(NO_DATA_VALUE);
-Vector1d force_sensor_counts(NO_DATA_VALUE);
-Vector1d torque_sensor_counts(NO_DATA_VALUE);
-Vector1d front_temp_sensor_counts(NO_DATA_VALUE);
-Vector1d rear_temp_sensor_counts(NO_DATA_VALUE);
+Vector1d drill_speed_sensor_counts(NO_DATA_VALUE); // RPM
+Vector1d screwjack_position_sensor_counts(NO_DATA_VALUE); // cm
+Vector1d screwjack_speed_counts(NO_DATA_VALUE); // cm/min
+Vector1d hpu_pressure_sensor_counts(NO_DATA_VALUE); // bar
+Vector1d screwjack_pressure_sensor_counts(NO_DATA_VALUE); // bar
+Vector1d drill_pressure_sensor_counts(NO_DATA_VALUE); // bar
+Vector1d force_sensor_counts(NO_DATA_VALUE); // N
+Vector1d torque_sensor_counts(NO_DATA_VALUE); // Nm
+Vector1d front_temp_sensor_counts(NO_DATA_VALUE); // deg C
+Vector1d rear_temp_sensor_counts(NO_DATA_VALUE); // deg C
 
 // 100 Hz logger
 Logging::Logger logger(10000);
@@ -61,29 +62,48 @@ const std::string rear_bearing_temp_key = "utec::read::temperature::rear_bearing
 
 const std::string logger_key = "utec::logging::start";
 
+const uint sampling_rate = 1000; //Hz
+
+ButterworthFilter rotary_speed_filter(1, sampling_rate, 30);
+double rotary_speed_last_counts = NO_DATA_VALUE;
+Vector1d rotary_speed_raw, rotary_speed_filtered; // required for the filter
+
 double getCalibratedRotarySpeed(double raw_counts) {
-	//TODO
-	return raw_counts;
+	if(rotary_speed_last_counts == NO_DATA_VALUE)
+	{
+		rotary_speed_last_counts = raw_counts;
+	}
+	rotary_speed_raw << (raw_counts - rotary_speed_last_counts)*sampling_rate*60/60; // revs/min = revs/count (1/60) * counts/sec * secs/min (60)
+	rotary_speed_filtered = rotary_speed_filter.update(rotary_speed_raw);
+	rotary_speed_last_counts = raw_counts;
+	return rotary_speed_filtered[0];
 }
 
+ButterworthFilter linear_speed_filter(1, sampling_rate, 30);
+double linear_speed_last_counts = NO_DATA_VALUE;
+Vector1d linear_speed_raw, linear_speed_filtered; // required for the filter
+
 double getCalibratedLinearSpeed(double raw_counts) {
-	//TODO
-	return raw_counts;
+	if(linear_speed_last_counts == NO_DATA_VALUE)
+	{
+		linear_speed_last_counts = raw_counts;
+	}
+	linear_speed_raw << (raw_counts - linear_speed_last_counts)*sampling_rate*60/48*2.54; // cm/min = in/count (1/48) * cm/in (2.54) * counts/sec * secs/min (60)
+	linear_speed_filtered = linear_speed_filter.update(linear_speed_raw);
+	linear_speed_last_counts = raw_counts;
+	return linear_speed_filtered[0];
 }
 
 double getCalibratedScrewjackPosition(double raw_counts) {
-	// TODO
-	return raw_counts;
+	return raw_counts/48*2.54; // cm/count = in/count (1/48) * cm/in (2.54)
 }
 
 double getCalibratedPressure(double raw_counts) {
-	//TODO
-	return raw_counts;
+	return raw_counts*0.0063125;
 }
 
 double getCalibratedTemperature(double raw_counts) {
-	//TODO
-	return raw_counts;
+	return raw_counts/10;
 }
 
 double getCalibratedTorque(double raw_counts) {
@@ -163,7 +183,7 @@ int main (int argc, char** argv) {
 
 	master.setThreadHighPriority();
 	master.activate();
-	uint control_freq = 1000; // Hz
+	uint control_freq = sampling_rate;
 
 	logger.addVectorToLog(&hpu_pressure_sensor_counts, "hpu_pressure");
 	logger.addVectorToLog(&drill_pressure_sensor_counts, "drill_pressure");

@@ -12,7 +12,7 @@ set(CMAKE_CXX_FLAGS "-std=c++14 -I/usr/include -I/usr/local/include")
 ################Project source#################
 include_directories(${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/src)
 set(COMMON_SOURCE
-	#${PROJECT_SOURCE_DIR}/utils/ButterworthFilter.cpp
+	${PROJECT_SOURCE_DIR}/utils/ButterworthFilter.cpp
     ${PROJECT_SOURCE_DIR}/utils/RedisClient.cpp
 )
 
