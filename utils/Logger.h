@@ -42,7 +42,7 @@ class Logger {
 public:
 	// ctor
 	Logger(long interval, std::string fname)
-	: _log_interval_(interval), _logname(fname), _f_is_logging(false)
+	: _log_interval_(interval), _logname(fname), _f_is_logging(false), _max_log_time_us(0), _num_vars_to_log(0)
 	{
 		// create log file
 		_logfile.open(fname, std::ios::out);
@@ -51,7 +51,7 @@ public:
 
 	// ctor without creating a log file
 	Logger(long interval)
-	: _log_interval_(interval), _logname(""), _f_is_logging(false)
+	: _log_interval_(interval), _logname(""), _f_is_logging(false), _max_log_time_us(0), _num_vars_to_log(0)
 	{
 		_header = "timestamp, ";
 	}
@@ -64,6 +64,7 @@ public:
 		}
 		auto e = new EigenVector<Derived>(var);
 		_vars_to_log.push_back(dynamic_cast<IEigenVector* >(e));
+		_num_vars_to_log += var->size();
 		for (uint i = 0; i < var->size(); i++) {
 			if (!var_name.empty()) {
 				_header += var_name + "_" + std::to_string(i) + ", ";
@@ -99,6 +100,13 @@ public:
 		// complete header line
 		_logfile << _header << "\n";
 
+		// calculate max log time to keep log under 2GB
+		if(_num_vars_to_log > 0) {
+			_max_log_time_us = _log_interval_*2e9/(_num_vars_to_log*7+10);
+		} else {
+			_max_log_time_us = 3600*1e6; // 1 hour
+		}
+
 		// start logging thread by move assignment
 		_log_thread = std::thread{&Logger::logWorker, this};
 
@@ -119,6 +127,7 @@ public:
 	// vector of pointers to encapsulated Eigen vector objects that are registered with 
 	// the logger
 	std::vector<IEigenVector *> _vars_to_log;
+	uint _num_vars_to_log;
 
 	// header string
 	std::string _header;
@@ -131,6 +140,9 @@ public:
 
 	// log interval in microseconds
 	long _log_interval_;
+
+	// maximum allowed log time in microseconds
+	long _max_log_time_us;
 
 	// log file
 	std::fstream _logfile;
@@ -158,9 +170,16 @@ private:
 					iter->print(_logfile);
 				}
 				_logfile << "\n";
+
+				// log stop on max time limit
+				if(t_elapsed.count() > _max_log_time_us) {
+					std::cerr << "Logging stopped due to time limit" << std::endl;
+					break;
+				}
 				last_time = curr_time;
 			}
 		}
+		_logfile.flush();
 	}
 
 	// hide default constructor
