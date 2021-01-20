@@ -133,6 +133,23 @@ void RedisClient::pipeset(const std::vector<std::pair<std::string, std::string>>
 	}
 }
 
+void RedisClient::pipeset(const std::vector<std::pair<std::string, std::string>>& keyvals, int expire_seconds) {
+	// Prepare key list
+	for (const auto& keyval : keyvals) {
+		redisAppendCommand(context_.get(), "SET %s %s EX %d", keyval.first.c_str(), keyval.second.c_str(), expire_seconds);
+	}
+
+	for (size_t i = 0; i < keyvals.size(); i++) {
+		redisReply *r;
+		if (redisGetReply(context_.get(), (void **)&r) == REDIS_ERR)
+			throw std::runtime_error("RedisClient: Pipeline SET command failed for key: " + keyvals[i].first + ".");
+
+		std::unique_ptr<redisReply, redisReplyDeleter> reply(r);
+		if (reply->type == REDIS_REPLY_ERROR)
+			throw std::runtime_error("RedisClient: Pipeline SET command failed for key: " + keyvals[i].first + ".");
+	}
+}
+
 std::vector<std::string> RedisClient::mget(const std::vector<std::string>& keys) {
 	// Prepare key list
 	std::vector<const char *> argv = {"MGET"};

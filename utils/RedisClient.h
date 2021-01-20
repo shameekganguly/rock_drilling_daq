@@ -150,6 +150,8 @@ public:
 	 */
 	void pipeset(const std::vector<std::pair<std::string, std::string>>& keyvals);
 
+	void pipeset(const std::vector<std::pair<std::string, std::string>>& keyvals, int expire_seconds);
+
 	/**
 	 * Perform Redis command: MGET key1 key2...
 	 *
