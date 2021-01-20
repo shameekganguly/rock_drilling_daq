@@ -119,7 +119,7 @@ class DataManager():
 				self.dataDict[all_keys[ind]].set(NO_DATA_VALUE)
 			else:
 				try:
-					self.dataDict[all_keys[ind]].set(int(output[ind]))
+					self.dataDict[all_keys[ind]].set(int(float(output[ind])))
 				except Exception:
 					print("Warning: Redis read exception for key %s" %(all_keys[ind]))
 		self.screwjack_position_comp.set(
@@ -331,7 +331,7 @@ def main():
 	# TODO: get arguments
 	# start UI
 	root = Tk()
-	root.geometry("1100x600+100+100")
+	root.geometry("1200x600+100+100")
 	data_manager = DataManager()
 	data_manager.startRead()
 	ui_manager = UIManager(root, data_manager)
