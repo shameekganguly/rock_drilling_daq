@@ -25,6 +25,9 @@ void RedisClient::connect(const std::string& hostname, const int port,
 
 	// Save context
 	context_ = std::move(context);
+
+	// set password
+	command("AUTH utecrocks321");
 }
 
 std::unique_ptr<redisReply, redisReplyDeleter> RedisClient::command(const char *format, ...) {
