@@ -42,11 +42,18 @@ class Logger {
 public:
 	// ctor
 	Logger(long interval, std::string fname)
-	: _log_interval_(interval)
+	: _log_interval_(interval), _logname(fname), _f_is_logging(false)
 	{
 		// create log file
 		_logfile.open(fname, std::ios::out);
-		_logfile << "timestamp, ";
+		_header = "timestamp, ";
+	}
+
+	// ctor without creating a log file
+	Logger(long interval)
+	: _log_interval_(interval), _logname(""), _f_is_logging(false)
+	{
+		_header = "timestamp, ";
 	}
 
 	// add Eigen vector type variable to watch
@@ -59,12 +66,26 @@ public:
 		_vars_to_log.push_back(dynamic_cast<IEigenVector* >(e));
 		for (uint i = 0; i < var->size(); i++) {
 			if (!var_name.empty()) {
-				_logfile << var_name << "_" << i << ", ";
+				_header += var_name + "_" + std::to_string(i) + ", ";
 			} else {
-				_logfile << "var" << _vars_to_log.size() << "_" << i << ", ";
+				_header += "var" + std::to_string(_vars_to_log.size()) + "_" + std::to_string(i) + ", ";
 			}
 		}
 		return true;
+	}
+
+	bool newFileStart(std::string fname) {
+		// do not overwrite old file
+		if(fname.compare(_logname) == 0) {
+            std::cerr << "Log file name requested matches existing file. Disregarding request." << std::endl;
+			return false;
+		}
+		if(_f_is_logging) {
+			stop();
+		}
+		_logfile.open(fname, std::ios::out);
+		fname = _logname;
+		return start();
 	}
 
 	// start logging
@@ -76,7 +97,7 @@ public:
 		_f_is_logging = true;
 
 		// complete header line
-		_logfile << "\n";
+		_logfile << _header << "\n";
 
 		// start logging thread by move assignment
 		_log_thread = std::thread{&Logger::logWorker, this};
@@ -99,6 +120,9 @@ public:
 	// the logger
 	std::vector<IEigenVector *> _vars_to_log;
 
+	// header string
+	std::string _header;
+
 	// state
 	bool _f_is_logging;
 
@@ -110,6 +134,9 @@ public:
 
 	// log file
 	std::fstream _logfile;
+
+	// log file name
+	std::string _logname;
 
 	// thread
 	std::thread _log_thread;
