@@ -8,15 +8,17 @@ import time
 from threading import Thread
 import numpy as np
 from playsound import playsound
+import argparse
 
 NO_DATA_VALUE = -9999
 
 class DataManager():
-	def __init__(self, redis_ip_add="127.0.0.1", redis_port=6379, update_freq=10):
+	def __init__(self, redis_ip_add="127.0.0.1", redis_port=6379, redis_password=None, update_freq=10):
 		self.reading = False
 		# self.update_freq = update_freq # not being used. We are using tkinter variables instead
 		self.redis_port = redis_port
 		self.redis_ip_add = redis_ip_add
+		self.redis_password = redis_password
 		# redis keys and values
 		self.hpu_pressure_key = "utec::read::pressure::hpu"
 		self.hpu_pressure = IntVar(value=NO_DATA_VALUE)
@@ -74,7 +76,7 @@ class DataManager():
 
 	def startRead(self):
 		# connect to redis
-		self.connection = Redis(host=self.redis_ip_add, port=self.redis_port)
+		self.connection = Redis(host=self.redis_ip_add, port=self.redis_port, password=self.redis_password)
 		self.reading = True
 
 		# -- Not using threading --
@@ -327,12 +329,20 @@ class UIManager(Frame):
 		self.data.stopRead()
 		return True
 
+def options():
+	parser = argparse.ArgumentParser(description='Data acquisition UI for Utec experiments')
+	parser.add_argument('-i', '--ipaddr', default='127.0.0.1', help='IP address for the data acquisition computer')
+	parser.add_argument('-p', '--port', type=int, default=6379, help='Port on data acquisition computer where redis server is running')
+	parser.add_argument('--password', default='utecrocks321', help='Password for redis if required')
+	return parser.parse_args()
+
 def main():
-	# TODO: get arguments
+	# get arguments
+	opts = options()
 	# start UI
 	root = Tk()
 	root.geometry("1200x600+100+100")
-	data_manager = DataManager()
+	data_manager = DataManager(redis_ip_add=opts.ipaddr, redis_port=opts.port, redis_password=opts.password)
 	data_manager.startRead()
 	ui_manager = UIManager(root, data_manager)
 
