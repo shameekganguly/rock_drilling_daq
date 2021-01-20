@@ -65,7 +65,7 @@ class DataManager():
 		self.temperature_unit = "deg C"
 		self.position_unit = "cm"
 		self.torque_unit = "Nm"
-		self.force_unit = "kN"
+		self.force_unit = "N"
 
 		# redis command keys
 		self.start_logging_key = "utec::logging::start"
