@@ -33,6 +33,7 @@ Logging::Logger logger(10000);
 simplecat::Master master;
 simplecat::Beckhoff_EK1100 bh_ek1100;
 simplecat::Beckhoff_EL5152 bh_el5152;
+simplecat::Beckhoff_EL5152 bh_el5152_blank; // connected but not used
 simplecat::Beckhoff_EL9510 bh_el9510;
 simplecat::Beckhoff_EL3356 bh_el3356_force;
 simplecat::Beckhoff_EL3356 bh_el3356_torque;
@@ -175,11 +176,12 @@ int main (int argc, char** argv) {
 	master.addSlave(0, 0, &bh_ek1100);
 	master.addSlave(0, 1, &bh_el5152);
 	master.addSlave(0, 2, &bh_el3202);
-	master.addSlave(0, 3, &bh_el3062_1);
-	master.addSlave(0, 4, &bh_el3062_2);
-	master.addSlave(0, 5, &bh_el9510);
-	master.addSlave(0, 6, &bh_el3356_force);
-	master.addSlave(0, 7, &bh_el3356_torque);
+	master.addSlave(0, 3, &bh_el5152_blank);
+	master.addSlave(0, 4, &bh_el3062_1);
+	master.addSlave(0, 5, &bh_el3062_2);
+	master.addSlave(0, 6, &bh_el9510);
+	master.addSlave(0, 7, &bh_el3356_force);
+	master.addSlave(0, 8, &bh_el3356_torque);
 
 	master.setThreadHighPriority();
 	master.activate();
