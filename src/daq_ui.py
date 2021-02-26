@@ -124,7 +124,7 @@ class DataManager():
 					self.dataDict[all_keys[ind]].set(int(float(output[ind])))
 				except Exception:
 					print("Warning: Redis read exception for key %s" %(all_keys[ind]))
-		self.screwjack_force.set(int(self.screwjack_force.get() / 20)*20)
+		self.screwjack_force.set(round(self.screwjack_force.get() / 20)*20)
 		self.screwjack_position_comp.set(
 			self.screwjack_position_raw.get() - self.screwjack_position_offset.get()
 		)
