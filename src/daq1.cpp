@@ -118,8 +118,9 @@ double getCalibratedForce(double raw_counts) {
 void control_callback() {
 	drill_speed_sensor_counts << getCalibratedRotarySpeed(bh_el5152.read_value[0]); // channel 1 is drill speed sensor
 	screwjack_position_sensor_counts << getCalibratedScrewjackPosition(bh_el5152.read_value[1]); // channel 2 is screwjack encoder
-	hpu_pressure_sensor_counts << getCalibratedPressure(bh_el3062_1.read_data_[0]); // 3062_1 channel 1 is hpu pressure
-	drill_pressure_sensor_counts << getCalibratedPressure(bh_el3062_1.read_data_[1]); // 3062_1 channel 2 is drill pressure
+	screwjack_speed_counts << getCalibratedLinearSpeed(bh_el5152.read_value[1]); // channel 2 is screwjack encoder
+	drill_pressure_sensor_counts << getCalibratedPressure(bh_el3062_1.read_data_[0]); // 3062_1 channel 1 is drill pressure
+	hpu_pressure_sensor_counts << getCalibratedPressure(bh_el3062_1.read_data_[1]); // 3062_1 channel 2 is hpu pressure (DIFFERENT FROM SCHEMATIC)
 	screwjack_pressure_sensor_counts << getCalibratedPressure(bh_el3062_2.read_data_[0]); // 3062_2 channel 1 is screwjack pressure
 	force_sensor_counts << getCalibratedForce(bh_el3356_force.read_value);
 	torque_sensor_counts << getCalibratedTorque(bh_el3356_torque.read_value);
@@ -180,8 +181,8 @@ int main (int argc, char** argv) {
 	master.addSlave(0, 4, &bh_el3062_1);
 	master.addSlave(0, 5, &bh_el3062_2);
 	master.addSlave(0, 6, &bh_el9510);
-	master.addSlave(0, 7, &bh_el3356_force);
-	master.addSlave(0, 8, &bh_el3356_torque);
+	master.addSlave(0, 7, &bh_el3356_torque);
+	master.addSlave(0, 8, &bh_el3356_force);
 
 	master.setThreadHighPriority();
 	master.activate();
