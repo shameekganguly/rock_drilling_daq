@@ -74,7 +74,7 @@ double getCalibratedRotarySpeed(double raw_counts) {
 	{
 		rotary_speed_last_counts = raw_counts;
 	}
-	rotary_speed_raw << (raw_counts - rotary_speed_last_counts)*sampling_rate*60/60/4; // revs/min = revs/count (1/60) * counts/sec * secs/min (60) * beckhoff_counts/count (1/4) (4 fold evaluation)
+	rotary_speed_raw << (raw_counts - rotary_speed_last_counts)*sampling_rate*60.0/60.0/4.0; // revs/min = revs/count (1/60) * counts/sec * secs/min (60) * beckhoff_counts/count (1/4) (4 fold evaluation)
 	rotary_speed_filtered = rotary_speed_filter.update(rotary_speed_raw);
 	rotary_speed_last_counts = raw_counts;
 	return rotary_speed_filtered[0];
