@@ -74,7 +74,7 @@ double getCalibratedRotarySpeed(double raw_counts) {
 	{
 		rotary_speed_last_counts = raw_counts;
 	}
-	rotary_speed_raw << (raw_counts - rotary_speed_last_counts)*sampling_rate*60/60; // revs/min = revs/count (1/60) * counts/sec * secs/min (60)
+	rotary_speed_raw << (raw_counts - rotary_speed_last_counts)*sampling_rate*60/60/4; // revs/min = revs/count (1/60) * counts/sec * secs/min (60) * beckhoff_counts/count (1/4) (4 fold evaluation)
 	rotary_speed_filtered = rotary_speed_filter.update(rotary_speed_raw);
 	rotary_speed_last_counts = raw_counts;
 	return rotary_speed_filtered[0];
@@ -89,14 +89,14 @@ double getCalibratedLinearSpeed(double raw_counts) {
 	{
 		linear_speed_last_counts = raw_counts;
 	}
-	linear_speed_raw << (raw_counts - linear_speed_last_counts)*sampling_rate*60/48*2.54/200; // cm/min = in/count (1/48)* rev/count (1/200)* cm/in (2.54) * counts/sec * secs/min (60)
+	linear_speed_raw << (raw_counts - linear_speed_last_counts)*sampling_rate*60/48*2.54/200/4; // cm/min = in/count (1/48)* rev/count (1/200)* cm/in (2.54) * counts/sec * secs/min (60) * beckhoff_counts/count (1/4) (4 fold evaluation)
 	linear_speed_filtered = linear_speed_filter.update(linear_speed_raw);
 	linear_speed_last_counts = raw_counts;
 	return linear_speed_filtered[0];
 }
 
 double getCalibratedScrewjackPosition(double raw_counts) {
-	return raw_counts/48*2.54/200; // cm/count = in/rev (1/48) * rev/count (1/200) * cm/in (2.54)
+	return raw_counts/48*2.54/200/4; // cm/count = in/rev (1/48) * rev/count (1/200) * cm/in (2.54) * beckhoff_counts/count (1/4) (4 fold evaluation)
 }
 
 double getCalibratedPressure(double raw_counts) {
