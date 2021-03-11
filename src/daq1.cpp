@@ -120,8 +120,8 @@ double getCalibratedForce(double raw_counts) {
 }
 
 void control_callback() {
-	// drill_speed_sensor_counts << getCalibratedRotarySpeed(bh_el5152.read_value[0]); // channel 1 is drill speed sensor
-	drill_speed_sensor_counts << getCalibratedRotaryCounts(bh_el5152.read_value[0]);
+	drill_speed_sensor_counts << getCalibratedRotarySpeed(bh_el5152.read_value[0]); // channel 1 is drill speed sensor
+	// drill_speed_sensor_counts << getCalibratedRotaryCounts(bh_el5152.read_value[0]);
 	screwjack_position_sensor_counts << getCalibratedScrewjackPosition(bh_el5152.read_value[1]); // channel 2 is screwjack encoder
 	screwjack_speed_counts << getCalibratedLinearSpeed(bh_el5152.read_value[1]); // channel 2 is screwjack encoder
 	drill_pressure_sensor_counts << getCalibratedPressure(bh_el3062_1.read_data_[0]); // 3062_1 channel 1 is drill pressure
