@@ -65,7 +65,7 @@ const std::string logger_key = "utec::logging::start";
 
 const uint sampling_rate = 1000; //Hz
 
-ButterworthFilter rotary_speed_filter(1, sampling_rate, 30);
+ButterworthFilter rotary_speed_filter(1, sampling_rate, 15);
 double rotary_speed_last_counts = NO_DATA_VALUE;
 Vector1d rotary_speed_raw, rotary_speed_filtered; // required for the filter
 
@@ -74,7 +74,7 @@ double getCalibratedRotarySpeed(double raw_counts) {
 	{
 		rotary_speed_last_counts = raw_counts;
 	}
-	rotary_speed_raw << (raw_counts - rotary_speed_last_counts)*sampling_rate*60.0/60.0/4.0; // revs/min = revs/count (1/60) * counts/sec * secs/min (60) * beckhoff_counts/count (1/4) (4 fold evaluation)
+	rotary_speed_raw << -(raw_counts - rotary_speed_last_counts)*sampling_rate*60.0/60.0/4.0; // revs/min = revs/count (1/60) * counts/sec * secs/min (60) * beckhoff_counts/count (1/4) (4 fold evaluation)
 	rotary_speed_filtered = rotary_speed_filter.update(rotary_speed_raw);
 	rotary_speed_last_counts = raw_counts;
 	return rotary_speed_filtered[0];
@@ -84,7 +84,7 @@ double getCalibratedRotaryCounts(double raw_counts) {
 	return raw_counts/4.0; // revs/min = revs/count (1/60) * counts/sec * secs/min (60) * beckhoff_counts/count (1/4) (4 fold evaluation)
 }
 
-ButterworthFilter linear_speed_filter(1, sampling_rate, 30);
+ButterworthFilter linear_speed_filter(1, sampling_rate, 15);
 double linear_speed_last_counts = NO_DATA_VALUE;
 Vector1d linear_speed_raw, linear_speed_filtered; // required for the filter
 
