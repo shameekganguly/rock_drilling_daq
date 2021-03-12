@@ -270,7 +270,7 @@ class UIManager(Frame):
 			self.alertUser('TERMINATE: PRESSURE LIMIT REACHED!!')
 
 		elif self.data.hpu_pressure.get() > self.min_stall_pressure:
-		 	if self.data.drill_speed.get() > NO_DATA_VALUE and self.data.drill_speed.get() < self.drill_stall_speed_threshold:
+			if self.data.drill_speed.get() > NO_DATA_VALUE and self.data.drill_speed.get() < self.drill_stall_speed_threshold:
 				self.alertUser('TERMINATE: DRILL STALLED!!')
 			if self.data.screwjack_speed.get() > NO_DATA_VALUE and self.data.screwjack_speed.get() < self.screwjack_stall_speed_threshold:
 				self.alertUser('TERMINATE: SCREWJACK STALLED!!')
