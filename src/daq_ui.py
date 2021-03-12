@@ -153,7 +153,8 @@ class UIManager(Frame):
 		self.data = data_manager
 		self.max_temperature = 90 #deg C
 		self.max_pressure = 105 #bar
-		self.stall_speed_threshold = 5 # RPM or cm/min
+		self.drill_stall_speed_threshold = 5 # RPM
+		self.screwjack_stall_speed_threshold = 1 # cm/min
 		self.min_stall_pressure = 60 # bar
 		self.max_screwjack_travel = 25 #cm
 
@@ -262,18 +263,17 @@ class UIManager(Frame):
 			self.data.front_bearing_temp.get(),
 			self.data.rear_bearing_temp.get()
 		)
-		speed = min(
-			self.data.drill_speed.get(),
-			self.data.screwjack_speed.get()
-		)
 		if temperature > self.max_temperature:
 			self.alertUser('TERMINATE: TEMPERATURE LIMIT REACHED!!')
 
 		elif self.data.hpu_pressure.get() > self.max_pressure:
 			self.alertUser('TERMINATE: PRESSURE LIMIT REACHED!!')
 
-		elif self.data.hpu_pressure.get() > self.min_stall_pressure and speed > NO_DATA_VALUE and speed < self.stall_speed_threshold:
-			self.alertUser('TERMINATE: DRILL OR SCREWJACK STALLED!!')
+		elif self.data.hpu_pressure.get() > self.min_stall_pressure:
+		 	if self.data.drill_speed.get() > NO_DATA_VALUE and self.data.drill_speed.get() < self.drill_stall_speed_threshold:
+				self.alertUser('TERMINATE: DRILL STALLED!!')
+			if self.data.screwjack_speed.get() > NO_DATA_VALUE and self.data.screwjack_speed.get() < self.screwjack_stall_speed_threshold:
+				self.alertUser('TERMINATE: SCREWJACK STALLED!!')
 
 		elif self.data.screwjack_position_comp.get() > self.max_screwjack_travel:
 			self.alertUser('TERMINATE: SCREWJACK TRAVEL LIMIT REACHED!!')
