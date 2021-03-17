@@ -317,7 +317,7 @@ class UIManager(Frame):
 		self.is_logging = False
 
 	def zeroScrewjackPosition(self):
-		if self.data.screwjack_position_raw.get() > NO_DATA_VALUE:
+		if self.data.screwjack_position_raw.get() != NO_DATA_VALUE:
 			self.data.screwjack_position_offset.set(self.data.screwjack_position_raw.get())
 
 	def displayLogname(self):
